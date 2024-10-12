@@ -132,10 +132,6 @@ def load_and_plot(file_path):
     """Handles file loading and plotting in a separate thread."""
     threading.Thread(target=plot_waveform, args=(file_path,), daemon=True).start()
 
-
-
-
-
 def update_plot():
     if pygame.mixer.music.get_busy():
         current_time = pygame.mixer.music.get_pos() / 1000
@@ -189,6 +185,20 @@ def add_many_songs():
     for song in songs:
         song_box.insert(END, song)
 
+def update_averages(sound_wave, rate):
+    
+    fft_spectrum = np.abs(np.fft.fft(sound_wave))[:len(sound_wave) // 2]
+    freq_axis = np.fft.fftfreq(len(sound_wave), 1 / rate)[:len(sound_wave) // 2]
+    
+    avg_frequency = np.mean(freq_axis)
+    avg_amplitude = np.mean(np.abs(sound_wave))
+
+    
+    harmonics, harmonic_magnitudes = compute_harmonics(sound_wave, rate)
+    avg_harmonics = np.mean(harmonic_magnitudes)
+    
+    return avg_frequency, avg_amplitude, avg_harmonics
+
 def play():
     global stopped
     stopped = False
@@ -204,6 +214,21 @@ def play():
 
         # Load and plot the waveform in a separate thread
         load_and_plot(wav_path)
+
+        # Calculate average frequency, amplitude, and harmonics
+        wave_file = wave.open(wav_path, 'r')
+        frames = wave_file.getnframes()
+        rate = wave_file.getframerate()
+        raw_data = wave_file.readframes(frames)
+        sound_wave = np.frombuffer(raw_data, dtype=np.int16)
+
+        avg_frequency, avg_amplitude, avg_harmonics = update_averages(sound_wave, rate)
+
+        # Display the averages above the song controls with a black background
+        avg_label.config(text=f"Avg Frequency: {avg_frequency:.2f} Hz | "
+                              f"Avg Amplitude: {avg_amplitude:.2f} | "
+                              f"Avg Harmonics: {avg_harmonics:.2f}",
+                         bg='black', fg='white')
 
         pygame.mixer.music.load(wav_path)
         pygame.mixer.music.play(loops=0)
@@ -355,6 +380,8 @@ my_slider.grid(row=2, column=0, pady=10)
 status_bar = Label(root, text='', bd=1, relief=GROOVE, anchor=E)
 status_bar.pack(fill=X, side=BOTTOM, ipady=2)
 
+avg_label = Label(root, text='', font=('Helvetica', 12), bg='black', fg='white')
+avg_label.pack(fill=X, padx=10, pady=10)
 
 plot_frame = Frame(root, width=800, height=500)
 plot_frame.pack(pady=20, fill=BOTH, expand=True)
