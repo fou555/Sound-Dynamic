@@ -93,47 +93,37 @@ def output_wavs(signal, name, sampling_rate, table):
         sampling_rate,
         signal.astype(np.float32))
 
-def adjust_pitch(buffer, pitch_factor=1.3):  # Increased pitch factor for higher sound
+def adjust_pitch(buffer, pitch_factor=1.3):  
     indices = np.round(np.arange(0, len(buffer), pitch_factor)).astype(int)
-    # Ensure indices stay within the bounds of the buffer
     indices = np.clip(indices, 0, len(buffer) - 1)
     return buffer[indices]
 
-def adjust_speed(buffer, speed_factor=1.3):  # Increased speed factor for faster speech
+def adjust_speed(buffer, speed_factor=1.3):  
     indices = np.round(np.arange(0, len(buffer), speed_factor)).astype(int)
-    # Ensure indices stay within the bounds of the buffer
     indices = np.clip(indices, 0, len(buffer) - 1)
     return buffer[indices]
 
-# ฟังก์ชันสำหรับสร้างเสียงจากข้อความ
-def synthesize_text_to_speech(text, filename='output_tts.wav'):
-    # ใช้ gTTS เพื่อแปลงข้อความเป็นเสียง
-    tts = gTTS(text=text, lang='th', slow=False)  # ใช้ slow=False สำหรับการพูดเร็ว
-    tts.save('temp.mp3')  # บันทึกไฟล์ชั่วคราวเป็นไฟล์ MP3
 
-    # แปลงไฟล์ MP3 เป็น WAV
-    os.system(f'ffmpeg -i temp.mp3 -ar 22050 {filename}')  # ใช้ ffmpeg แปลงไฟล์
-    os.remove('temp.mp3')  # ลบไฟล์ชั่วคราวหลังจากแปลง
+def synthesize_text_to_speech(text, filename='output_tts.wav'):
+    tts = gTTS(text=text, lang='th', slow=False)  
+    tts.save('temp.mp3')  
+    os.system(f'ffmpeg -i temp.mp3 -ar 22050 {filename}')  
+    os.remove('temp.mp3')  
 
     print(f"Saved synthesized speech to {filename}")
 
 def main():
     sampling_rate = 44100
     wavetable_size = 64
-    synth = Voice(sampling_rate, gain=-5)  # Increased gain for brightness
-
-    # Generate sine wave
+    synth = Voice(sampling_rate, gain=-5)  
     sine_table = generate_wavetable(wavetable_size, np.sin)
     synth.oscillators += [WavetableOscillator(sine_table, sampling_rate, LinearInterpolator())]
     sine = synth.synthesize(frequency=880, duration_seconds=3)
-
-    # Adjust pitch and speed for a joyful tone
-    sine = adjust_pitch(sine, pitch_factor=2.0)  # Increased pitch factor for higher sound
-    sine = adjust_speed(sine, speed_factor=2.7)  # Increased speed factor for faster speech
+    sine = adjust_pitch(sine, pitch_factor=2.0)  
+    sine = adjust_speed(sine, speed_factor=2.7) 
 
     output_wavs(sine, 'sine', sampling_rate, sine_table)
 
-    # สร้างเสียงที่มีอารมณ์
     text = "สวัสดี"
     synthesize_text_to_speech(text, filename='sawasdee_joyful.wav')
 
