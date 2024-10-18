@@ -17,26 +17,23 @@ root = Tk()
 root.title('Sound Dynamiction Cross X')
 root.geometry("800x800")
 
-# Initialize Pygame Mixer
+
 pygame.mixer.init()
 
 def convert_to_wav(file_path):
-    print(f"กำลังแปลงไฟล์: {file_path}")  # ตรวจสอบไฟล์ต้นฉบับ
+    print(f"กำลังแปลงไฟล์: {file_path}")  
     if file_path.endswith(".mp3"):
         sound = AudioSegment.from_mp3(file_path)
         wav_path = file_path.replace(".mp3", ".wav")
-        print(f"Exporting to WAV: {wav_path}")  # Debugging statement
+        print(f"Exporting to WAV: {wav_path}")  
         sound.export(wav_path, format="wav")
-        print(f"ไฟล์ WAV ที่แปลงแล้ว: {wav_path}")  # ตรวจสอบไฟล์ที่แปลงแล้ว
+        print(f"ไฟล์ WAV ที่แปลงแล้ว: {wav_path}")  
         return wav_path
     return file_path
 
 def compute_harmonics(sound_wave, rate):
-    # Compute the FFT of the sound wave
     fft_spectrum = np.abs(np.fft.fft(sound_wave))[:len(sound_wave) // 2]
     freq_axis = np.fft.fftfreq(len(sound_wave), 1 / rate)[:len(sound_wave) // 2]
-
-    # Detect harmonics (simplified)
     fundamental_freq = np.argmax(fft_spectrum)
     harmonics = [fundamental_freq * (i + 1) for i in range(10)]
     harmonic_magnitudes = [fft_spectrum[int(f)] if f < len(fft_spectrum) else 0 for f in harmonics]
@@ -46,7 +43,7 @@ def compute_harmonics(sound_wave, rate):
 def plot_waveform(file_path=None):
     print(f"กำลังพล็อตกราฟสำหรับไฟล์: {file_path}")
     global wave_file, sound_wave, time_axis, frames, rate, anim, canvas, freq_anim, harmonic_anim
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(7.5, 2.5))  # Reduced figsize to 50%
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(7.5, 2.5))  
 
     ax1.set_xlabel('Time (s)')
     ax1.set_ylabel('Amplitude')
@@ -62,7 +59,6 @@ def plot_waveform(file_path=None):
 
     try:
         if file_path:
-            # Open the wave file
             wave_file = wave.open(file_path, 'r')
             sample_width = wave_file.getsampwidth()
             frames = wave_file.getnframes()
@@ -72,53 +68,51 @@ def plot_waveform(file_path=None):
             if sample_width != 2:
                 raise ValueError("Only 16-bit PCM WAV files are supported")
 
-            # Read all frames and convert to numpy array
+            
             raw_data = wave_file.readframes(frames)
             sound_wave = np.frombuffer(raw_data, dtype=np.int16)
 
-            # Only take a segment of the sound wave for plotting
+            
             max_frames = min(len(sound_wave), int(rate * 240))
             sound_wave = sound_wave[:max_frames]
             time_axis = np.linspace(0, len(sound_wave) / rate, num=len(sound_wave))
 
-            # Compute FFT and harmonics
+            
             fft_spectrum = np.abs(np.fft.fft(sound_wave))[:len(sound_wave) // 2]
             freq_axis = np.fft.fftfreq(len(sound_wave), 1 / rate)[:len(sound_wave) // 2]
             harmonics, harmonic_magnitudes = compute_harmonics(sound_wave, rate)
 
-            # Debugging statements
+            
             print(f"Waveform Data (First 10 samples): {sound_wave[:10]}")
             print(f"FFT Spectrum (First 10 values): {fft_spectrum[:10]}")
             print(f"Harmonics: {harmonics}")
             print(f"Harmonic Magnitudes: {harmonic_magnitudes}")
 
-            # Plot amplitude
+           
             anim, = ax1.plot(time_axis, sound_wave, color='red', label='Amplitude')
             ax1.set_xlim(0, min(duration, 240))
             ax1.set_ylim(min(sound_wave), max(sound_wave))
             ax1.legend()
 
-            # Plot frequency spectrum
+            
             freq_anim, = ax2.plot(freq_axis, fft_spectrum, color='blue', label='Frequency Spectrum')
             ax2.set_xlim(0, 1000)
             ax2.set_ylim(0, np.max(fft_spectrum))
             ax2.legend()
 
-            # Plot harmonics
+            
             harmonic_anim, = ax3.plot(harmonics, harmonic_magnitudes, 'o', color='green', label='Harmonics')
             ax3.set_xlim(0, max(harmonics) * 1.2)
             ax3.set_ylim(0, np.max(harmonic_magnitudes))
             ax3.legend()
         else:
-            # Set empty plots
             for ax in [ax1, ax2, ax3]:
                 ax.clear()
 
-        # Clear previous plots
         for widget in plot_frame.winfo_children():
             widget.destroy()
 
-        # Create new canvas
+        
         canvas = FigureCanvasTkAgg(fig, master=plot_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=BOTH, expand=True)
@@ -139,7 +133,7 @@ def update_plot():
         if index < len(sound_wave):
             anim.set_ydata(sound_wave[:index])
             canvas.draw()
-        root.after(50, update_plot)  # update every 50 ms
+        root.after(50, update_plot)  
 
 def play_time():
     global song_length
@@ -205,17 +199,15 @@ def play():
     song = song_box.get(ACTIVE)
 
     try:
-        print(f"กำลังโหลดเพลง: {song}")  # ตรวจสอบชื่อเพลง
+        print(f"กำลังโหลดเพลง: {song}")  
         wav_path = convert_to_wav(song)
-        print(f"เส้นทางของไฟล์ WAV ที่แปลง: {wav_path}")  # ตรวจสอบเส้นทางไฟล์
+        print(f"เส้นทางของไฟล์ WAV ที่แปลง: {wav_path}")  
 
         if not os.path.exists(wav_path):
             raise FileNotFoundError(f"ไม่พบไฟล์ WAV: {wav_path}")
-
-        # Load and plot the waveform in a separate thread
         load_and_plot(wav_path)
 
-        # Calculate average frequency, amplitude, and harmonics
+        
         wave_file = wave.open(wav_path, 'r')
         frames = wave_file.getnframes()
         rate = wave_file.getframerate()
@@ -224,7 +216,7 @@ def play():
 
         avg_frequency, avg_amplitude, avg_harmonics = update_averages(sound_wave, rate)
 
-        # Display the averages above the song controls with a black background
+       
         avg_label.config(text=f"Avg Frequency: {avg_frequency:.2f} Hz | "
                               f"Avg Amplitude: {avg_amplitude:.2f} | "
                               f"Avg Harmonics: {avg_harmonics:.2f}",
@@ -248,7 +240,7 @@ def stop():
     status_bar.config(text='')
     global stopped
     stopped = True
-    plot_waveform()  # Reset the plot to an empty state
+    plot_waveform()  
 
 def next_song():
     status_bar.config(text='')
