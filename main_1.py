@@ -1,5 +1,5 @@
 from tkinter import *
-import pygame  # type: ignore
+import pygame  
 from tkinter import filedialog
 import time
 from mutagen.mp3 import MP3
@@ -17,7 +17,6 @@ import torch
 import soundfile as sf
 from tkinter import StringVar
 
-# Initialize Tkinter root
 root = Tk()
 root.title('Sound Dynamiction Cross X')
 root.geometry("800x800")
@@ -186,7 +185,7 @@ def modify_and_synthesize():
         print(f"Error modifying and synthesizing: {e}")
 
 def play():
-    global paused, stopped  # เพิ่ม 'stopped' ที่นี่
+    global paused, stopped  
     if stopped:
         song = song_box.get(ACTIVE)
         if song.endswith(".mp3"):
@@ -255,7 +254,7 @@ def play_time():
         progress_var.set(current_time)  
         root.after(1000, play_time)  
 
-# UI Setup
+
 load_btn = Button(root, text="Load Songs", command=load_songs)
 load_btn.pack(pady=10)
 
